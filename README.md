@@ -1,19 +1,19 @@
 # Multi-Agent Competitive Intelligence System
 
-This repo contains planning and implementation work for an individual assignment in the MSBA Leveraging LLM Productivity course. The target system will accept a public company name and produce a six-section Competitive Intelligence Brief using a `Supervisor-Worker` multi-agent architecture in `LangGraph`.
+This repo contains an implemented multi-agent competitive intelligence system for an assignment in the MSBA Leveraging LLM Productivity course. The system accepts a public company name and produces a six-section Competitive Intelligence Brief using a `Supervisor-Worker` architecture in `LangGraph`.
 
-## Current architecture decision
+## Current architecture
 
-The design direction for this assignment is now locked in:
+The implemented system uses:
 
 - Framework: `LangGraph`
 - LLM backend: `OpenRouter` using `nvidia/nemotron-3-super-120b-a12b:free`
 - Topology: `Supervisor-Worker`
-- Flow style: mostly `sequential`, with one controlled validation loop
+- Flow style: mostly `sequential`, with one validator-driven revision loop
 - Company scope: `public companies only`
 - Depth mechanism: `Validator Agent` to reduce hallucination risk and improve confidence in the final brief
 
-This direction matches the course themes well:
+This implementation is designed to:
 
 - clear agent specialization instead of one monolithic prompt
 - explicit orchestration and routing through a supervisor
@@ -21,9 +21,9 @@ This direction matches the course themes well:
 - retry and fallback as first-class workflow behavior
 - evaluation-minded design through a validator/oracle layer
 
-## Proposed pipeline
+## Implemented pipeline
 
-The planned pipeline is:
+The current pipeline is:
 
 1. `Supervisor`
 2. `Company Profile Agent`
@@ -35,7 +35,7 @@ The planned pipeline is:
 8. if validation fails once but is recoverable -> send back to `Synthesis Agent`
 9. if validation still fails -> return partial brief with a disclaimer
 
-This is a sequential backbone, but it still qualifies as `Supervisor-Worker` because the supervisor owns routing, aggregation, retries, fallbacks, and termination.
+This is a sequential backbone, but it still qualifies as `Supervisor-Worker` because the supervisor owns routing, retries, fallbacks, aggregation, and termination.
 
 ## Agent roles
 
@@ -59,7 +59,7 @@ Primary assignment coverage:
 - `Company Overview`
 - `Products & Services`
 
-Planned tools:
+Tools:
 - web search
 - Wikipedia fallback
 
@@ -75,7 +75,7 @@ Primary assignment coverage:
 - `Financial Snapshot`
 - `Top 3 Competitors`
 
-Planned tools:
+Tools:
 - `yfinance`
 - web search for competitor support if needed
 
@@ -89,7 +89,7 @@ Responsibility:
 Primary assignment coverage:
 - `Recent News`
 
-Planned tools:
+Tools:
 - web search
 
 ### `Synthesis Agent`
@@ -133,9 +133,9 @@ LLM-based checks:
 - does the strategic assessment overclaim beyond the gathered facts?
 - are any financial claims invented instead of explicitly marked unavailable?
 
-## Retry and fallback plan
+## Retry and fallback behavior
 
-The assignment requires both `retry` and `fallback`, so they are part of the intended architecture from the start.
+The assignment requires both `retry` and `fallback`, and both are implemented in the workflow.
 
 Retry:
 - `Company Profile Agent`: retry with alternative search query if initial results are weak
@@ -149,9 +149,9 @@ Fallback:
 - `News Agent`: return fewer news items with limited-coverage disclaimer
 - `Synthesis Agent`: use deterministic template formatter if necessary
 
-## Planned LangGraph state
+## LangGraph state
 
-The graph will likely maintain structured state such as:
+The graph maintains structured state such as:
 
 - `company_name`
 - `company_profile`
@@ -167,7 +167,24 @@ The graph will likely maintain structured state such as:
 - `fallback_flags`
 - `agent_logs`
 
-## Why this design is a strong fit for the assignment
+## What is implemented now
+
+- `LangGraph` workflow with explicit nodes and conditional routing
+- `Company Profile`, `Financial Analyst`, `News`, `Synthesis`, and `Validator` agents
+- per-agent retry handling with log messages
+- per-agent fallback behavior
+- single validator-driven revision loop
+- deterministic finalization path that still returns a brief if live services fail
+
+Main implementation files:
+
+- `main.py`
+- `ci_system/supervisor.py`
+- `ci_system/agents.py`
+- `ci_system/tools.py`
+- `ci_system/models.py`
+
+## Why this design fits the assignment
 
 - It satisfies the requirement for at least 3 specialized agents.
 - It uses an explicit supervisor/orchestrator.
@@ -175,19 +192,6 @@ The graph will likely maintain structured state such as:
 - It includes both mandatory failure-handling mechanisms.
 - It adds depth in a way that is meaningful rather than decorative.
 - It should be straightforward to explain in the write-up and architecture diagram.
-
-## Build plan
-
-The implementation plan is:
-
-1. Set up the LangGraph project skeleton and provider abstraction for OpenRouter/Nemotron.
-2. Define the shared graph state and output schemas.
-3. Implement worker nodes: `Company Profile`, `Financial Analyst`, and `News`.
-4. Implement `Synthesis Agent` and deterministic brief formatter fallback.
-5. Implement `Validator Agent` with deterministic checks plus one revision loop.
-6. Add retry/fallback handling and logging that can be shown in the submission.
-7. Test on a public company with strong public data coverage.
-8. Finalize README, architecture diagram, sample output, and write-up.
 
 ## Setup
 
@@ -211,6 +215,7 @@ SEARCH_REGION=us-en
 Notes:
 - The default provider path is now `OpenRouter` with a free `Nemotron` model.
 - The live run will depend on internet access because the research and finance workers call real-world data tools.
+- If the LLM or external data sources are unavailable, the workflow should still terminate and return a partial-but-honest brief.
 
 ## How to run
 
@@ -220,9 +225,11 @@ Run with the local virtual environment:
 .venv/bin/python main.py AMD
 ```
 
+You can replace `AMD` with any public company name.
+
 ## Expected output
 
-The target system will write:
+The system writes:
 
 - A markdown Competitive Intelligence Brief to `outputs/latest_brief.md` by default
 - Execution logs to `logs/run.log` by default
@@ -238,7 +245,7 @@ The brief contains exactly these six sections:
 
 ## Failure handling
 
-This project is planned to implement both required mechanisms:
+This project implements both required mechanisms:
 
 - `Retry`: each worker is retried up to three times on failure
 - `Fallback`: if retries are exhausted, the worker returns a partial-but-honest result
@@ -247,6 +254,22 @@ Example log messages:
 
 - `CompanyProfileAgent failed. Retrying (attempt 2 of 3)...`
 - `FinancialAnalystAgent failed after 3 retries. Falling back to alternative strategy.`
+
+## Verification status
+
+What has been verified:
+
+- the source compiles
+- the LangGraph workflow builds successfully
+- the graph terminates correctly
+- the validator loop revises at most once
+- a brief is still returned when live services fail
+
+Important caveat:
+
+- the Codex desktop sandbox used during development had restricted outbound access, so live calls to Wikipedia, web search, Yahoo/yfinance, and OpenRouter failed in-tool
+- because of that, the in-tool runtime primarily exercised retry and fallback behavior rather than the full live-data path
+- the system should be re-run in a normal local environment with network access for a true live brief
 
 ## Framework choice
 
@@ -263,6 +286,8 @@ Reason:
 - code folder
 - `README.md`
 - `requirements.txt`
+- `AGENTS.md`
+- `docs/PROJECT_CONTEXT.md`
 - architecture diagram from `docs/architecture_diagram.md`
 - write-up PDF based on `docs/writeup_draft.md`
 - sample output from `outputs/sample_nvidia_brief.md`
