@@ -1,0 +1,6 @@
+openai>=1.30.0
+langgraph>=0.2.0
+duckduckgo-search>=6.1.0
+yfinance>=0.2.54
+wikipedia-api>=0.6.0
+python-dotenv>=1.0.1

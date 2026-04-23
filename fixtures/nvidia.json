@@ -1,0 +1,66 @@
+{
+  "research": {
+    "overview": "NVIDIA is a public semiconductor and computing-platform company founded in 1993 and headquartered in Santa Clara, California. It designs GPUs, networking products, and accelerated computing systems used across gaming, data centers, automotive, and robotics markets. Public company profiles and market data sources report a workforce of more than 30,000 employees. Its current strategy is centered on turning AI infrastructure into a full-stack platform business spanning chips, systems, networking, and software.",
+    "products_and_services": "NVIDIA's primary product lines include GeForce gaming GPUs, RTX professional graphics, data-center GPUs, DGX and HGX AI systems, InfiniBand and Ethernet networking, and the CUDA software ecosystem. Its core customers include hyperscalers, enterprises building AI workloads, OEM partners, research institutions, and developers. The company's value proposition is that it sells not just chips, but an integrated accelerated-computing stack that can improve AI training and inference performance while reducing time to deployment.",
+    "recent_news": [
+      {
+        "headline": "NVIDIA reported record fiscal 2026 revenue driven by data-center demand",
+        "summary": "In its fourth-quarter and fiscal 2026 results, NVIDIA said revenue rose sharply year over year, reinforcing the scale of demand for AI infrastructure and the centrality of its data-center business.",
+        "source": "NVIDIA investor relations",
+        "url": "https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-Announces-Financial-Results-for-Fourth-Quarter-and-Fiscal-2026/default.aspx"
+      },
+      {
+        "headline": "NVIDIA unveiled Blackwell Ultra and next-generation AI infrastructure at GTC 2026",
+        "summary": "At GTC 2026, NVIDIA introduced Blackwell Ultra systems and related platform updates, signaling continued product cadence and an effort to keep performance leadership in AI infrastructure.",
+        "source": "NVIDIA newsroom",
+        "url": "https://nvidianews.nvidia.com/news/nvidia-blackwell-ultra-ai-factory-platform-opens-era-of-ai-reasoning"
+      },
+      {
+        "headline": "Export controls created new uncertainty around parts of NVIDIA's China business",
+        "summary": "U.S. policy restrictions on advanced AI chip exports continued to shape how NVIDIA serves China, making regulation a material strategic variable for revenue mix and product strategy.",
+        "source": "Reuters",
+        "url": "https://www.reuters.com/technology/artificial-intelligence/nvidia-faces-new-us-export-curbs-ai-chips-china-2025-04-16/"
+      }
+    ],
+    "sources": [
+      {
+        "title": "NVIDIA Announces Financial Results for Fourth Quarter and Fiscal 2026",
+        "url": "https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-Announces-Financial-Results-for-Fourth-Quarter-and-Fiscal-2026/default.aspx",
+        "snippet": "Official revenue and profitability announcement for fiscal 2026."
+      },
+      {
+        "title": "NVIDIA Blackwell Ultra AI Factory Platform",
+        "url": "https://nvidianews.nvidia.com/news/nvidia-blackwell-ultra-ai-factory-platform-opens-era-of-ai-reasoning",
+        "snippet": "Official product-announcement page from GTC 2026."
+      }
+    ]
+  },
+  "financial": {
+    "financial_snapshot": "NVIDIA reported fiscal 2026 revenue of $130.5B, up 114% year over year, with GAAP net income of $72.9B according to its official fourth-quarter and full-year results. The company is strongly profitable rather than cash-burning, and its data-center segment remains the primary growth engine. Because NVIDIA is public, funding-raised metrics are less relevant than revenue, profitability, and capital-market access.",
+    "competitors": [
+      {
+        "name": "AMD",
+        "why_it_competes": "AMD competes with NVIDIA in AI accelerators, data-center GPUs, and supporting software platforms for enterprise and hyperscaler workloads.",
+        "differentiator": "AMD's differentiator is its broader CPU-plus-GPU portfolio and its push to position Instinct accelerators as a more open alternative in certain enterprise environments."
+      },
+      {
+        "name": "Intel",
+        "why_it_competes": "Intel competes with NVIDIA in data-center compute, AI accelerators, networking-adjacent infrastructure, and enterprise procurement relationships.",
+        "differentiator": "Intel's key differentiator is its massive installed base in enterprise and server CPUs, which can help it bundle or cross-sell AI infrastructure even when its accelerator position is weaker."
+      },
+      {
+        "name": "Broadcom",
+        "why_it_competes": "Broadcom competes indirectly and sometimes directly in AI infrastructure through custom accelerators, networking silicon, and enabling hyperscaler alternatives to standard GPU-heavy architectures.",
+        "differentiator": "Broadcom is differentiated by its strength in custom silicon and connectivity, especially for customers that want more tailored AI infrastructure stacks."
+      }
+    ],
+    "sources": [
+      {
+        "title": "NVIDIA FY2026 earnings release",
+        "url": "https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-Announces-Financial-Results-for-Fourth-Quarter-and-Fiscal-2026/default.aspx",
+        "snippet": "Revenue, earnings, and data-center performance."
+      }
+    ]
+  }
+}
+
