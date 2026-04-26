@@ -10,58 +10,71 @@ from urllib.parse import urlparse
 
 PAGE_WIDTH = 612
 PAGE_HEIGHT = 792
-LEFT_MARGIN = 54
-RIGHT_MARGIN = 54
-TOP_MARGIN = 56
-BOTTOM_MARGIN = 48
-CONTENT_WIDTH = PAGE_WIDTH - LEFT_MARGIN - RIGHT_MARGIN
-
-BODY_FONT_SIZE = 11
-BODY_LEADING = 15
-SECTION_FONT_SIZE = 15
-SECTION_LEADING = 22
-SUBSECTION_FONT_SIZE = 12
-SUBSECTION_LEADING = 17
-TITLE_FONT_SIZE = 20
-TITLE_LEADING = 26
-SUBTITLE_FONT_SIZE = 10
-SUBTITLE_LEADING = 14
-FOOTER_FONT_SIZE = 9
-
-WRAP_WIDTH = 88
 
 
 @dataclass
 class StyledLine:
     text: str
     font: str = "F1"
-    size: int = BODY_FONT_SIZE
-    leading: int = BODY_LEADING
+    size: int = 11
+    leading: int = 15
     align: str = "left"
     gap_before: int = 0
     indent: int = 0
 
 
-def export_brief_pdf(text: str, output_path: str | Path, title: str = "Competitive Intelligence Brief") -> None:
+def export_brief_pdf(
+    text: str,
+    output_path: str | Path,
+    title: str = "Competitive Intelligence Brief",
+    subtitle_lines: list[str] | None = None,
+    style: str = "report",
+) -> None:
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
 
-    lines = _build_styled_lines(text, title=title)
-    pages = _paginate_lines(lines)
-    pdf_bytes = _build_pdf(pages)
+    metrics = _style_metrics(style)
+    global _ACTIVE_STYLE
+    _ACTIVE_STYLE = metrics
+    lines = _build_styled_lines(text, title=title, subtitle_lines=subtitle_lines, metrics=metrics)
+    pages = _paginate_lines(lines, metrics)
+    pdf_bytes = _build_pdf(pages, metrics)
     output.write_bytes(pdf_bytes)
 
 
-def _build_styled_lines(text: str, title: str) -> list[StyledLine]:
+def _build_styled_lines(
+    text: str,
+    title: str,
+    subtitle_lines: list[str] | None = None,
+    metrics: dict[str, int] | None = None,
+) -> list[StyledLine]:
+    metrics = metrics or _style_metrics("report")
     generated_on = datetime.now().strftime("%B %d, %Y")
-    lines: list[StyledLine] = [
-        StyledLine(title, font="F2", size=TITLE_FONT_SIZE, leading=TITLE_LEADING, align="center"),
-        StyledLine("Competitive Intelligence Report", font="F3", size=SUBTITLE_FONT_SIZE, leading=SUBTITLE_LEADING, align="center", gap_before=4),
-        StyledLine(f"Generated {generated_on}", font="F3", size=SUBTITLE_FONT_SIZE, leading=SUBTITLE_LEADING, align="center", gap_before=1),
-        StyledLine("", gap_before=14),
+    subtitle_block = subtitle_lines or [
+        "Competitive Intelligence Report",
+        f"Generated {generated_on}",
     ]
+    lines: list[StyledLine] = [
+        StyledLine(title, font="F2", size=metrics["title_font_size"], leading=metrics["title_leading"], align="center"),
+    ]
+    for idx, subtitle in enumerate(subtitle_block):
+        lines.append(
+            StyledLine(
+                subtitle,
+                font="F3",
+                size=metrics["subtitle_font_size"],
+                leading=metrics["subtitle_leading"],
+                align="center",
+                gap_before=4 if idx == 0 else 1,
+            )
+        )
+    lines.append(StyledLine("", gap_before=metrics["title_gap_after"]))
 
     raw_lines = text.splitlines()
+    if raw_lines and raw_lines[0].startswith("# "):
+        raw_lines = raw_lines[1:]
+        while raw_lines and not raw_lines[0].strip():
+            raw_lines = raw_lines[1:]
     i = 0
     current_section = ""
     while i < len(raw_lines):
@@ -69,7 +82,7 @@ def _build_styled_lines(text: str, title: str) -> list[StyledLine]:
         stripped = raw.strip()
 
         if not stripped:
-            lines.append(StyledLine("", gap_before=4))
+            lines.append(StyledLine("", gap_before=metrics["paragraph_gap"]))
             i += 1
             continue
 
@@ -80,22 +93,38 @@ def _build_styled_lines(text: str, title: str) -> list[StyledLine]:
         if stripped.startswith("## "):
             heading = stripped[3:].strip()
             current_section = heading
-            lines.append(StyledLine(heading, font="F2", size=SECTION_FONT_SIZE, leading=SECTION_LEADING, gap_before=10))
+            lines.append(
+                StyledLine(
+                    heading,
+                    font="F2",
+                    size=metrics["section_font_size"],
+                    leading=metrics["section_leading"],
+                    gap_before=metrics["section_gap_before"],
+                )
+            )
             i += 1
             continue
 
         if stripped.startswith("# "):
             heading = stripped[2:].strip()
             current_section = heading
-            lines.append(StyledLine(heading, font="F2", size=SECTION_FONT_SIZE, leading=SECTION_LEADING, gap_before=10))
+            lines.append(
+                StyledLine(
+                    heading,
+                    font="F2",
+                    size=metrics["section_font_size"],
+                    leading=metrics["section_leading"],
+                    gap_before=metrics["section_gap_before"],
+                )
+            )
             i += 1
             continue
 
         if stripped.startswith("- "):
             bullet = "- " + _clean_inline_markup(stripped[2:])
-            for idx, wrapped in enumerate(_wrap_text(bullet, width=WRAP_WIDTH - 4)):
+            for idx, wrapped in enumerate(_wrap_text(bullet, width=metrics["wrap_width"] - 4)):
                 prefix_gap = 4 if idx == 0 else 0
-                lines.append(StyledLine(wrapped, gap_before=prefix_gap))
+                lines.append(StyledLine(wrapped, size=metrics["body_font_size"], leading=metrics["body_leading"], gap_before=prefix_gap))
             i += 1
             continue
 
@@ -105,8 +134,8 @@ def _build_styled_lines(text: str, title: str) -> list[StyledLine]:
                 StyledLine(
                     subsection,
                     font="F2",
-                    size=SUBSECTION_FONT_SIZE,
-                    leading=SUBSECTION_LEADING,
+                    size=metrics["subsection_font_size"],
+                    leading=metrics["subsection_leading"],
                     gap_before=8,
                 )
             )
@@ -116,17 +145,24 @@ def _build_styled_lines(text: str, title: str) -> list[StyledLine]:
         if current_section.startswith("5. Recent News"):
             story_text, sources = _extract_sources(stripped)
             cleaned = _clean_inline_markup(story_text)
-            for idx, wrapped in enumerate(_wrap_text(cleaned)):
-                lines.append(StyledLine(wrapped, gap_before=4 if idx == 0 else 0))
+            for idx, wrapped in enumerate(_wrap_text(cleaned, width=metrics["wrap_width"])):
+                lines.append(
+                    StyledLine(
+                        wrapped,
+                        size=metrics["body_font_size"],
+                        leading=metrics["body_leading"],
+                        gap_before=metrics["paragraph_gap"] if idx == 0 else 0,
+                    )
+                )
             if sources:
                 source_line = "Source: " + ", ".join(sources)
-                for idx, wrapped in enumerate(_wrap_text(source_line, width=WRAP_WIDTH - 6)):
+                for idx, wrapped in enumerate(_wrap_text(source_line, width=metrics["wrap_width"] - 6)):
                     lines.append(
                         StyledLine(
                             wrapped,
                             font="F3",
-                            size=10,
-                            leading=13,
+                            size=metrics["source_font_size"],
+                            leading=metrics["source_leading"],
                             gap_before=2 if idx == 0 else 0,
                             indent=18,
                         )
@@ -135,8 +171,15 @@ def _build_styled_lines(text: str, title: str) -> list[StyledLine]:
             continue
 
         cleaned = _clean_inline_markup(stripped)
-        for idx, wrapped in enumerate(_wrap_text(cleaned)):
-            lines.append(StyledLine(wrapped, gap_before=4 if idx == 0 else 0))
+        for idx, wrapped in enumerate(_wrap_text(cleaned, width=metrics["wrap_width"])):
+            lines.append(
+                StyledLine(
+                    wrapped,
+                    size=metrics["body_font_size"],
+                    leading=metrics["body_leading"],
+                    gap_before=metrics["paragraph_gap"] if idx == 0 else 0,
+                )
+            )
         i += 1
 
     return lines
@@ -163,8 +206,8 @@ def _consume_table(raw_lines: list[str], start: int, lines: list[StyledLine]) ->
     return i
 
 
-def _paginate_lines(lines: list[StyledLine]) -> list[list[StyledLine]]:
-    usable_height = PAGE_HEIGHT - TOP_MARGIN - BOTTOM_MARGIN - 20
+def _paginate_lines(lines: list[StyledLine], metrics: dict[str, int]) -> list[list[StyledLine]]:
+    usable_height = PAGE_HEIGHT - metrics["top_margin"] - metrics["bottom_margin"] - 20
     pages: list[list[StyledLine]] = []
     current_page: list[StyledLine] = []
     used_height = 0
@@ -183,7 +226,7 @@ def _paginate_lines(lines: list[StyledLine]) -> list[list[StyledLine]]:
     return pages or [[StyledLine("No content available.")]]
 
 
-def _build_pdf(pages: list[list[StyledLine]]) -> bytes:
+def _build_pdf(pages: list[list[StyledLine]], metrics: dict[str, int]) -> bytes:
     objects: list[bytes] = []
 
     fonts = {
@@ -213,7 +256,7 @@ def _build_pdf(pages: list[list[StyledLine]]) -> bytes:
     objects.append(_pdf_obj(pages_obj_id, pages_dict))
 
     for page_num, (page_lines, page_obj_id, content_obj_id) in enumerate(zip(pages, page_obj_ids, content_obj_ids), start=1):
-        stream = _content_stream(page_lines, page_num, len(pages))
+        stream = _content_stream(page_lines, page_num, len(pages), metrics)
         page_dict = (
             f"<< /Type /Page /Parent {pages_obj_id} 0 R "
             f"/MediaBox [0 0 {PAGE_WIDTH} {PAGE_HEIGHT}] "
@@ -246,34 +289,33 @@ def _build_pdf(pages: list[list[StyledLine]]) -> bytes:
     return bytes(body)
 
 
-def _content_stream(lines: list[StyledLine], page_num: int, page_count: int) -> bytes:
+def _content_stream(lines: list[StyledLine], page_num: int, page_count: int, metrics: dict[str, int]) -> bytes:
     chunks: list[str] = []
 
-    # Header accent bar
-    chunks.extend([
-        "0.13 0.22 0.38 rg",
-        f"{LEFT_MARGIN} {PAGE_HEIGHT - 34} {PAGE_WIDTH - LEFT_MARGIN - RIGHT_MARGIN} 6 re",
-        "f",
-    ])
+    if metrics["show_header_bar"]:
+        chunks.extend([
+            "0.13 0.22 0.38 rg",
+            f"{metrics['left_margin']} {PAGE_HEIGHT - 34} {PAGE_WIDTH - metrics['left_margin'] - metrics['right_margin']} 6 re",
+            "f",
+        ])
 
-    # Header rule
-    chunks.extend([
-        "0.85 0.87 0.90 RG",
-        "1 w",
-        f"{LEFT_MARGIN} {PAGE_HEIGHT - TOP_MARGIN + 8} m",
-        f"{PAGE_WIDTH - RIGHT_MARGIN} {PAGE_HEIGHT - TOP_MARGIN + 8} l",
-        "S",
-    ])
+        chunks.extend([
+            "0.85 0.87 0.90 RG",
+            "1 w",
+            f"{metrics['left_margin']} {PAGE_HEIGHT - metrics['top_margin'] + 8} m",
+            f"{PAGE_WIDTH - metrics['right_margin']} {PAGE_HEIGHT - metrics['top_margin'] + 8} l",
+            "S",
+        ])
 
-    y = PAGE_HEIGHT - TOP_MARGIN
+    y = PAGE_HEIGHT - metrics["top_margin"]
     for line in lines:
         y -= line.gap_before
         x = _line_x(line)
         escaped = _escape_pdf_text(line.text)
-        if line.font == "F2" and line.size == SECTION_FONT_SIZE:
+        if metrics["show_section_box"] and line.font == "F2" and line.size == metrics["section_font_size"]:
             chunks.extend([
                 "0.90 0.93 0.97 rg",
-                f"{LEFT_MARGIN - 8} {y - 4} {CONTENT_WIDTH + 16} {line.leading + 6} re",
+                f"{metrics['left_margin'] - 8} {y - 4} {metrics['content_width'] + 16} {line.leading + 6} re",
                 "f",
             ])
         chunks.extend([
@@ -288,16 +330,16 @@ def _content_stream(lines: list[StyledLine], page_num: int, page_count: int) -> 
 
     # Footer page number
     footer = f"Page {page_num} of {page_count}"
-    footer_x = PAGE_WIDTH / 2 - _approx_text_width(footer, FOOTER_FONT_SIZE) / 2
+    footer_x = PAGE_WIDTH / 2 - _approx_text_width(footer, metrics["footer_font_size"]) / 2
     chunks.extend([
         "0.75 0.75 0.78 RG",
         "0.5 w",
-        f"{LEFT_MARGIN} {BOTTOM_MARGIN - 10} m",
-        f"{PAGE_WIDTH - RIGHT_MARGIN} {BOTTOM_MARGIN - 10} l",
+        f"{metrics['left_margin']} {metrics['bottom_margin'] - 10} m",
+        f"{PAGE_WIDTH - metrics['right_margin']} {metrics['bottom_margin'] - 10} l",
         "S",
         "BT",
-        f"/F3 {FOOTER_FONT_SIZE} Tf",
-        f"1 0 0 1 {footer_x:.2f} {BOTTOM_MARGIN - 24:.2f} Tm",
+        f"/F3 {metrics['footer_font_size']} Tf",
+        f"1 0 0 1 {footer_x:.2f} {metrics['bottom_margin'] - 24:.2f} Tm",
         f"({_escape_pdf_text(footer)}) Tj",
         "ET",
     ])
@@ -308,14 +350,14 @@ def _content_stream(lines: list[StyledLine], page_num: int, page_count: int) -> 
 def _line_x(line: StyledLine) -> float:
     if line.align == "center":
         return (PAGE_WIDTH - _approx_text_width(line.text, line.size)) / 2
-    return LEFT_MARGIN + line.indent
+    return _ACTIVE_STYLE["left_margin"] + line.indent
 
 
 def _approx_text_width(text: str, size: int) -> float:
     return len(text) * size * 0.52
 
 
-def _wrap_text(line: str, width: int = WRAP_WIDTH) -> list[str]:
+def _wrap_text(line: str, width: int = 88) -> list[str]:
     return textwrap.wrap(
         line,
         width=width,
@@ -351,15 +393,83 @@ def _escape_pdf_text(value: str) -> str:
 
 
 def _set_fill_color(line: StyledLine) -> list[str]:
-    if line.align == "center" and line.font == "F2" and line.size == TITLE_FONT_SIZE:
+    if line.align == "center" and line.font == "F2" and line.size == _ACTIVE_STYLE["title_font_size"]:
         return ["0.12 0.16 0.22 rg"]
     if line.align == "center":
         return ["0.38 0.43 0.50 rg"]
-    if line.font == "F2" and line.size == SECTION_FONT_SIZE:
+    if line.font == "F2" and line.size == _ACTIVE_STYLE["section_font_size"]:
         return ["0.13 0.22 0.38 rg"]
     if line.font == "F2":
         return ["0.19 0.25 0.33 rg"]
     return ["0.12 0.12 0.12 rg"]
+
+
+_ACTIVE_STYLE: dict[str, int] = {}
+
+
+def _style_metrics(style: str) -> dict[str, int]:
+    if style == "academic":
+        left_margin = 44
+        right_margin = 44
+        top_margin = 42
+        bottom_margin = 38
+        return {
+            "left_margin": left_margin,
+            "right_margin": right_margin,
+            "top_margin": top_margin,
+            "bottom_margin": bottom_margin,
+            "content_width": PAGE_WIDTH - left_margin - right_margin,
+            "body_font_size": 11,
+            "body_leading": 12,
+            "section_font_size": 13,
+            "section_leading": 16,
+            "subsection_font_size": 11,
+            "subsection_leading": 13,
+            "title_font_size": 16,
+            "title_leading": 20,
+            "subtitle_font_size": 10,
+            "subtitle_leading": 11,
+            "source_font_size": 9,
+            "source_leading": 11,
+            "footer_font_size": 8,
+            "wrap_width": 102,
+            "paragraph_gap": 2,
+            "section_gap_before": 6,
+            "title_gap_after": 8,
+            "show_header_bar": 0,
+            "show_section_box": 0,
+        }
+
+    left_margin = 54
+    right_margin = 54
+    top_margin = 56
+    bottom_margin = 48
+    return {
+        "left_margin": left_margin,
+        "right_margin": right_margin,
+        "top_margin": top_margin,
+        "bottom_margin": bottom_margin,
+        "content_width": PAGE_WIDTH - left_margin - right_margin,
+        "body_font_size": 11,
+        "body_leading": 15,
+        "section_font_size": 15,
+        "section_leading": 22,
+        "subsection_font_size": 12,
+        "subsection_leading": 17,
+        "title_font_size": 20,
+        "title_leading": 26,
+        "subtitle_font_size": 10,
+        "subtitle_leading": 14,
+        "source_font_size": 10,
+        "source_leading": 13,
+        "footer_font_size": 9,
+        "wrap_width": 88,
+        "paragraph_gap": 4,
+        "section_gap_before": 10,
+        "title_gap_after": 14,
+        "show_header_bar": 1,
+        "show_section_box": 1,
+    }
 
 
 def _format_markdown_links(text: str) -> str:
