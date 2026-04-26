@@ -9,8 +9,8 @@ Build a multi-agent competitive intelligence system for `public companies` that 
 ## Locked architecture
 
 - Framework: `LangGraph`
-- LLM provider path: `OpenRouter`
-- Default model: `nvidia/nemotron-3-super-120b-a12b:free`
+- LLM provider path: configurable OpenAI-compatible provider
+- Default OpenRouter model: `google/gemma-4-26b-a4b-it:free`
 - Topology: `Supervisor-Worker`
 - Flow: mostly sequential with one validator-driven revision loop
 
@@ -43,6 +43,8 @@ Build a multi-agent competitive intelligence system for `public companies` that 
 
 - The project should work for any public company with sufficient public information.
 - Never fabricate financial data. If unavailable, say so explicitly.
+- The `Financial Snapshot` should stay deterministic once a ticker is resolved.
+- Competitor discovery should remain separable from deterministic finance retrieval.
 - The validator is part of the architecture, not an optional extra.
 - The system should terminate cleanly even when live network calls fail.
 - Keep deterministic fallback behavior in place.
@@ -60,4 +62,3 @@ cd "/Users/luke/Desktop/leveraging llm prod/agent hw"
 .venv/bin/python main.py AMD
 python3 -m py_compile main.py ci_system/*.py
 ```
-

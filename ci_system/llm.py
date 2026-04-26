@@ -12,14 +12,28 @@ except ImportError:  # pragma: no cover - depends on local environment
 
 class LLMClient:
     def __init__(self, model: str | None = None) -> None:
-        self.api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
-        self.base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
-        self.model = model or os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-3-super-120b-a12b:free")
+        provider = os.getenv("LLM_PROVIDER", "openrouter").strip().lower()
+        if provider == "nvidia":
+            self.api_key = os.getenv("NVIDIA_API_KEY")
+            self.base_url = os.getenv("NVIDIA_BASE_URL", "https://integrate.api.nvidia.com/v1")
+            self.model = model or os.getenv("NVIDIA_MODEL", "minimaxai/minimax-m2.7")
+        elif provider == "openai":
+            self.api_key = os.getenv("OPENAI_API_KEY")
+            self.base_url = os.getenv("OPENAI_BASE_URL")
+            self.model = model or os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        else:
+            self.api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
+            self.base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+            self.model = model or os.getenv("OPENROUTER_MODEL", "google/gemma-4-26b-a4b-it:free")
+        max_retries = int(os.getenv("OPENAI_MAX_RETRIES", "0"))
         if self.api_key and OpenAI is not None:
-            self._client = OpenAI(
-                api_key=self.api_key,
-                base_url=self.base_url,
-            )
+            client_kwargs = {
+                "api_key": self.api_key,
+                "max_retries": max_retries,
+            }
+            if self.base_url:
+                client_kwargs["base_url"] = self.base_url
+            self._client = OpenAI(**client_kwargs)
         else:
             self._client = None
 

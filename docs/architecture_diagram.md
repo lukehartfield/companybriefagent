@@ -2,29 +2,38 @@
 
 ```mermaid
 flowchart TD
-    U[User enters company name] --> S[Supervisor / Orchestrator]
-    S --> R[Research Agent]
-    S --> F[Financial Analyst Agent]
-    R --> RT{Retry up to 3x}
-    F --> FT{Retry up to 3x}
-    RT -->|fail after retries| RF[Research fallback:
-    Wikipedia-only / partial brief disclaimer]
-    FT -->|fail after retries| FF[Finance fallback:
-    unavailable metrics / partial competitor set]
-    RT -->|success| RA[Research findings]
-    FT -->|success| FA[Financial findings]
-    RF --> A[Aggregation]
-    FF --> A
-    RA --> A
-    FA --> A
-    A --> SY[Synthesis Agent]
-    SY --> O[Competitive Intelligence Brief]
+    U[User enters public company name] --> S[Supervisor / Orchestrator]
+    S --> P[Company Profile Agent]
+    P --> PR{Retry up to 3x}
+    PR -->|success| F[Financial Analyst Agent]
+    PR -->|fail after retries| PF[Profile fallback:
+    partial overview/products disclaimer]
+
+    PF --> F
+    F --> FR{Retry up to 3x}
+    FR -->|success| N[News Agent]
+    FR -->|fail after retries| FF[Finance fallback:
+    deterministic unavailable snapshot + partial competitors]
+
+    FF --> N
+    N --> NR{Retry up to 3x}
+    NR -->|success| Y[Synthesis Agent]
+    NR -->|fail after retries| NF[News fallback:
+    partial news disclaimer]
+
+    NF --> Y
+    Y --> V[Validator Agent]
+    V --> VC{Pass?}
+    VC -->|yes| O[Final Competitive Intelligence Brief]
+    VC -->|no, first failure| Y2[One synthesis revision pass]
+    Y2 --> V2[Validator Agent]
+    V2 --> O2[Final brief or partial brief with validation note]
 ```
 
 Chosen topology: `Supervisor-Worker`
 
 Why it fits:
-- The supervisor owns routing, aggregation, and termination.
-- Workers stay specialized and do not talk directly to each other.
-- Retry and fallback happen cleanly at the worker boundary, which matches the lecture's deterministic-envelope framing.
-
+- The supervisor owns routing, retries, aggregation, revision control, and termination.
+- Workers stay specialized and do not communicate directly with each other.
+- The finance layer is intentionally split so ticker-based `Financial Snapshot` generation is more deterministic than competitor discovery.
+- The validator adds a deterministic-envelope layer around the final LLM-generated brief.

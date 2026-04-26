@@ -3,9 +3,31 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote_plus
+from urllib.parse import parse_qs, quote_plus, unquote, urlparse
 
 from ci_system.models import Source
+
+
+TICKER_OVERRIDES = {
+    "advanced micro devices": "AMD",
+    "amd": "AMD",
+    "nvidia": "NVDA",
+    "tesla": "TSLA",
+    "salesforce": "CRM",
+    "alphabet": "GOOGL",
+    "google": "GOOGL",
+    "meta": "META",
+    "amazon": "AMZN",
+    "microsoft": "MSFT",
+    "apple": "AAPL",
+    "broadcom": "AVGO",
+    "intel": "INTC",
+    "qualcomm": "QCOM",
+    "netflix": "NFLX",
+    "snowflake": "SNOW",
+    "chipotle": "CMG",
+    "rivian": "RIVN",
+}
 
 
 def search_web(query: str, max_results: int = 5, region: str = "us-en") -> list[Source]:
@@ -33,7 +55,7 @@ def search_web(query: str, max_results: int = 5, region: str = "us-en") -> list[
             href = ""
             anchor = title_el.find("a") if title_el else None
             if anchor and anchor.get("href"):
-                href = anchor["href"]
+                href = _normalize_search_result_url(anchor["href"])
             elif link_el:
                 href = link_el.get_text(" ", strip=True)
             snippet = snippet_el.get_text(" ", strip=True) if snippet_el else ""
@@ -48,6 +70,22 @@ def search_web(query: str, max_results: int = 5, region: str = "us-en") -> list[
     except Exception as exc:  # noqa: BLE001
         raise RuntimeError(f"Web search failed for query '{query}'.") from exc
     return results
+
+
+def search_web_queries(queries: list[str], max_results_per_query: int = 5, region: str = "us-en") -> list[Source]:
+    combined: list[Source] = []
+    errors: list[str] = []
+    for query in queries:
+        try:
+            combined.extend(search_web(query, max_results=max_results_per_query, region=region))
+        except Exception as exc:  # noqa: BLE001
+            errors.append(str(exc))
+    deduped = dedupe_sources(combined)
+    if deduped:
+        return deduped
+    if errors:
+        raise RuntimeError(errors[-1])
+    return []
 
 
 def get_wikipedia_summary(company_name: str) -> str:
@@ -75,16 +113,34 @@ def lookup_ticker(company_name: str) -> str | None:
     except ImportError as exc:  # pragma: no cover - depends on local environment
         raise RuntimeError("yfinance is not installed.") from exc
 
+    normalized = normalize_company_name(company_name)
+    if normalized in TICKER_OVERRIDES:
+        return TICKER_OVERRIDES[normalized]
+
+    stripped = company_name.strip()
+    if looks_like_ticker(stripped):
+        return stripped.upper()
+
     _configure_yfinance_cache(yf)
     try:
         search = yf.Search(query=company_name, max_results=5)
     except Exception as exc:  # noqa: BLE001
         raise RuntimeError(f"Ticker lookup failed for {company_name}.") from exc
+
+    exact_name_matches: list[str] = []
+    partial_name_matches: list[str] = []
     for quote in search.quotes:
         symbol = quote.get("symbol")
-        short_name = (quote.get("shortname") or "").lower()
-        if symbol and company_name.lower() in short_name:
-            return symbol
+        short_name = normalize_company_name(quote.get("shortname") or "")
+        long_name = normalize_company_name(quote.get("longname") or "")
+        if symbol and normalized in {short_name, long_name}:
+            exact_name_matches.append(symbol)
+        elif symbol and normalized and (normalized in short_name or normalized in long_name):
+            partial_name_matches.append(symbol)
+    if exact_name_matches:
+        return exact_name_matches[0]
+    if partial_name_matches:
+        return partial_name_matches[0]
     if search.quotes:
         return search.quotes[0].get("symbol")
     return None
@@ -146,6 +202,15 @@ def load_fixture(path: str | None) -> dict[str, Any] | None:
     return json.loads(Path(path).read_text())
 
 
+def normalize_company_name(name: str) -> str:
+    return " ".join((name or "").strip().lower().replace(",", " ").replace(".", " ").split())
+
+
+def looks_like_ticker(value: str) -> bool:
+    candidate = (value or "").strip()
+    return 0 < len(candidate) <= 5 and " " not in candidate and candidate.replace("-", "").replace(".", "").isalnum()
+
+
 def _configure_yfinance_cache(yf: Any) -> None:
     cache_dir = Path(__file__).resolve().parent.parent / ".cache" / "yfinance"
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -153,6 +218,38 @@ def _configure_yfinance_cache(yf: Any) -> None:
         yf.set_tz_cache_location(str(cache_dir))
     except Exception:
         pass
+
+
+def dedupe_sources(sources: list[Source]) -> list[Source]:
+    seen: set[str] = set()
+    deduped: list[Source] = []
+    for source in sources:
+        key = source.url.strip() or source.title.strip().lower()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        deduped.append(source)
+    return deduped
+
+
+def _normalize_search_result_url(raw_url: str) -> str:
+    if not raw_url:
+        return ""
+    if "duckduckgo.com/l/?" in raw_url:
+        parsed = urlparse(raw_url)
+        target = parse_qs(parsed.query).get("uddg")
+        if target:
+            return unquote(target[0])
+    return raw_url
+
+
+def source_domain(url: str) -> str:
+    if not url:
+        return ""
+    try:
+        return urlparse(url).netloc.lower()
+    except Exception:
+        return ""
 
 
 def money_text(value: Any) -> str:

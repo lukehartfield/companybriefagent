@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import time
 from pathlib import Path
 
 from ci_system.agents import (
@@ -13,6 +14,7 @@ from ci_system.agents import (
 )
 from ci_system.llm import LLMClient
 from ci_system.models import GraphState
+from ci_system.pdf_export import export_brief_pdf
 from ci_system.tools import load_fixture
 
 
@@ -39,10 +41,16 @@ def _append_log(state: GraphState, message: str) -> None:
     logger.info(message)
 
 
+def _is_rate_limit_error(exc: Exception) -> bool:
+    text = str(exc).lower()
+    return "429" in text or "rate limit" in text or "too many requests" in text
+
+
 def _run_with_retry(state: GraphState, agent_name: str, primary, fallback):
     retry_counts = dict(state.get("retry_counts", {}))
     fallback_flags = dict(state.get("fallback_flags", {}))
-    max_attempts = 3
+    low_rate_mode = bool(state.get("low_rate_mode", False))
+    max_attempts = 1 if low_rate_mode else 3
     last_error = None
     for attempt in range(1, max_attempts + 1):
         try:
@@ -55,8 +63,19 @@ def _run_with_retry(state: GraphState, agent_name: str, primary, fallback):
             return payload
         except Exception as exc:  # noqa: BLE001
             last_error = str(exc)
+            if _is_rate_limit_error(exc):
+                state["rate_limited"] = True
+                if low_rate_mode:
+                    _append_log(
+                        state,
+                        f"{agent_name} hit a rate limit in low-rate mode; skipping retries and using fallback.",
+                    )
+                    break
             if attempt < max_attempts:
                 _append_log(state, f"{agent_name} failed. Retrying (attempt {attempt + 1} of {max_attempts})... Error: {exc}")
+                if _is_rate_limit_error(exc):
+                    # Gentle throttle to avoid flooding provider buckets.
+                    time.sleep(2)
             else:
                 _append_log(state, f"{agent_name} failed on final attempt ({attempt} of {max_attempts}). Error: {exc}")
     _append_log(state, f"{agent_name} failed after {max_attempts} attempts. Falling back to alternative strategy.")
@@ -65,6 +84,18 @@ def _run_with_retry(state: GraphState, agent_name: str, primary, fallback):
     state["retry_counts"] = retry_counts
     state["fallback_flags"] = fallback_flags
     return fallback()
+
+
+def _run_once_with_fallback_log(state: GraphState, agent_name: str, primary, fallback):
+    try:
+        payload = primary()
+        _append_log(state, f"{agent_name} succeeded on first attempt.")
+        return payload
+    except Exception as exc:  # noqa: BLE001
+        if _is_rate_limit_error(exc):
+            state["rate_limited"] = True
+        _append_log(state, f"{agent_name} failed. Using deterministic fallback. Error: {exc}")
+        return fallback()
 
 
 class CompetitiveIntelligenceSupervisor:
@@ -112,6 +143,8 @@ class CompetitiveIntelligenceSupervisor:
         state.setdefault("retry_counts", {})
         state.setdefault("fallback_flags", {})
         state.setdefault("revision_count", 0)
+        state.setdefault("low_rate_mode", False)
+        state.setdefault("rate_limited", False)
         _append_log(state, f"Supervisor starting CI workflow for {state['company_name']}.")
         return state
 
@@ -147,7 +180,7 @@ class CompetitiveIntelligenceSupervisor:
 
     def synthesis_node(self, state: GraphState) -> GraphState:
         revision_feedback = state.get("validation_errors", []) if state.get("revision_count", 0) > 0 else []
-        state["draft_brief"] = _run_with_retry(
+        state["draft_brief"] = _run_once_with_fallback_log(
             state,
             self.synthesis_agent.name,
             lambda: self.synthesis_agent.run(
@@ -168,7 +201,7 @@ class CompetitiveIntelligenceSupervisor:
         return state
 
     def validator_node(self, state: GraphState) -> GraphState:
-        result = _run_with_retry(
+        result = _run_once_with_fallback_log(
             state,
             self.validator_agent.name,
             lambda: self.validator_agent.run(
@@ -188,6 +221,12 @@ class CompetitiveIntelligenceSupervisor:
         state["validation_errors"] = list(result.get("errors", []))
         if state["validation_pass"]:
             state["next_action"] = "finalize"
+        elif state.get("rate_limited", False):
+            state["next_action"] = "finalize"
+            _append_log(
+                state,
+                "Validator requested revision, but rate limiting was detected; skipping revision pass to conserve quota.",
+            )
         elif state.get("revision_count", 0) < 1:
             state["revision_count"] = state.get("revision_count", 0) + 1
             state["next_action"] = "revise"
@@ -218,7 +257,7 @@ class CompetitiveIntelligenceSupervisor:
         _append_log(state, f"Supervisor completed the Competitive Intelligence Brief for {state['company_name']}.")
         return state
 
-    def run(self, company_name: str) -> GraphState:
+    def run(self, company_name: str, low_rate_mode: bool = False) -> GraphState:
         initial_state: GraphState = {
             "company_name": company_name,
             "fixture": self.fixture,
@@ -227,6 +266,8 @@ class CompetitiveIntelligenceSupervisor:
             "fallback_flags": {},
             "revision_count": 0,
             "next_action": "finalize",
+            "low_rate_mode": low_rate_mode,
+            "rate_limited": False,
         }
         return self.graph.invoke(initial_state)
 
@@ -236,7 +277,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("company", help="Public company name, e.g. AMD")
     parser.add_argument("--fixture", help="Optional JSON fixture for reproducible offline runs.", default=None)
     parser.add_argument("--output", help="Where to save the generated markdown brief.", default="outputs/latest_brief.md")
+    parser.add_argument("--pdf-output", help="Where to save the generated PDF brief.", default=None)
     parser.add_argument("--log", help="Where to save execution logs.", default="logs/run.log")
+    parser.add_argument(
+        "--low-rate",
+        action="store_true",
+        help="Minimize LLM requests by reducing retries and skipping validator revision after rate limits.",
+    )
     return parser.parse_args()
 
 
@@ -251,15 +298,18 @@ def main() -> int:
     args = parse_args()
     base_dir = Path(__file__).resolve().parent.parent
     output_path = (base_dir / args.output).resolve()
+    pdf_output_path = (base_dir / args.pdf_output).resolve() if args.pdf_output else output_path.with_suffix(".pdf")
     log_path = (base_dir / args.log).resolve()
     configure_logging(log_path)
 
     fixture = load_fixture(args.fixture) if args.fixture else None
     llm = LLMClient()
     supervisor = CompetitiveIntelligenceSupervisor(llm=llm, fixture=fixture)
-    final_state = supervisor.run(args.company)
+    final_state = supervisor.run(args.company, low_rate_mode=args.low_rate)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(final_state["final_brief"])
+    export_brief_pdf(final_state["final_brief"], pdf_output_path, title=f"Competitive Intelligence Brief: {args.company}")
     logger.info("Saved brief to %s", output_path)
+    logger.info("Saved PDF brief to %s", pdf_output_path)
     return 0

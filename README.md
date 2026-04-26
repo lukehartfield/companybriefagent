@@ -7,7 +7,8 @@ This repo contains an implemented multi-agent competitive intelligence system fo
 The implemented system uses:
 
 - Framework: `LangGraph`
-- LLM backend: `OpenRouter` using `nvidia/nemotron-3-super-120b-a12b:free`
+- LLM backend: configurable `OpenAI-compatible` provider
+- default model path: `OpenRouter` using `google/gemma-4-26b-a4b-it:free`
 - Topology: `Supervisor-Worker`
 - Flow style: mostly `sequential`, with one validator-driven revision loop
 - Company scope: `public companies only`
@@ -66,9 +67,10 @@ Tools:
 ### `Financial Analyst Agent`
 
 Responsibility:
-- pulls public-company financial metrics
-- produces revenue/growth/profitability summary
-- identifies the top 3 competitors
+- resolves ticker as deterministically as possible
+- pulls structured public-company financial metrics from `yfinance`
+- builds the `Financial Snapshot` deterministically from raw fields
+- identifies the top 3 competitors as a separate best-effort step
 - provides one competitor differentiator for each
 
 Primary assignment coverage:
@@ -77,7 +79,12 @@ Primary assignment coverage:
 
 Tools:
 - `yfinance`
-- web search for competitor support if needed
+- web search for annual-report / IR support and competitor support if needed
+
+Important implementation detail:
+- the `Financial Snapshot` is intentionally more deterministic than the rest of the pipeline
+- once a ticker is resolved, the snapshot is constructed directly from structured `yfinance` fields rather than LLM-generated finance prose
+- competitor discovery is allowed to degrade independently so a flaky search step does not invalidate the finance snapshot
 
 ### `News Agent`
 
@@ -124,6 +131,7 @@ The validator should combine deterministic checks with an LLM-based review.
 Deterministic checks:
 - all 6 required section headings exist
 - `Top 3 Competitors` contains exactly 3 competitors
+- competitor names are not duplicated
 - `Recent News` contains 2-3 items
 - recent news includes source URLs
 - no section is empty
@@ -145,7 +153,7 @@ Retry:
 
 Fallback:
 - `Company Profile Agent`: use Wikipedia-first partial output with disclaimer
-- `Financial Analyst Agent`: return partial financial snapshot and explicitly mark unavailable data
+- `Financial Analyst Agent`: return a partial financial snapshot and explicitly mark unavailable structured fields; competitor discovery can degrade separately
 - `News Agent`: return fewer news items with limited-coverage disclaimer
 - `Synthesis Agent`: use deterministic template formatter if necessary
 
@@ -174,6 +182,8 @@ The graph maintains structured state such as:
 - per-agent retry handling with log messages
 - per-agent fallback behavior
 - single validator-driven revision loop
+- deterministic finance snapshot construction from structured ticker-based fields
+- improved ticker resolution with overrides and exact matching
 - deterministic finalization path that still returns a brief if live services fail
 
 Main implementation files:
@@ -206,16 +216,26 @@ cp .env.example .env
 Set your API keys in `.env`:
 
 ```bash
+LLM_PROVIDER=openrouter
+
 OPENROUTER_API_KEY=your_key_here
-OPENROUTER_MODEL=nvidia/nemotron-3-super-120b-a12b:free
+OPENROUTER_MODEL=google/gemma-4-26b-a4b-it:free
 OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+
+NVIDIA_API_KEY=your_key_here
+NVIDIA_MODEL=minimaxai/minimax-m2.7
+NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
+
+OPENAI_MAX_RETRIES=0
 SEARCH_REGION=us-en
 ```
 
 Notes:
-- The default provider path is now `OpenRouter` with a free `Nemotron` model.
+- The default provider path is `OpenRouter`.
+- To use NVIDIA hosted inference instead, set `LLM_PROVIDER=nvidia`.
 - The live run will depend on internet access because the research and finance workers call real-world data tools.
 - If the LLM or external data sources are unavailable, the workflow should still terminate and return a partial-but-honest brief.
+- The finance layer is now designed so the `Financial Snapshot` can remain deterministic and structured even if competitor discovery is weaker.
 
 ## How to run
 
@@ -223,6 +243,12 @@ Run with the local virtual environment:
 
 ```bash
 .venv/bin/python main.py AMD
+```
+
+Low-rate mode (fewer LLM requests when free-tier limits are tight):
+
+```bash
+.venv/bin/python main.py AMD --low-rate
 ```
 
 You can replace `AMD` with any public company name.
@@ -264,6 +290,7 @@ What has been verified:
 - the graph terminates correctly
 - the validator loop revises at most once
 - a brief is still returned when live services fail
+- the finance path is now structured so ticker-based snapshot generation is isolated from competitor-search failures
 
 Important caveat:
 

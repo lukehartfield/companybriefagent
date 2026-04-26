@@ -70,3 +70,5 @@ class GraphState(TypedDict, total=False):
     fallback_flags: dict[str, bool]
     agent_logs: list[str]
     fixture: dict[str, Any] | None
+    low_rate_mode: bool
+    rate_limited: bool
