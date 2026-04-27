@@ -2,6 +2,47 @@
 
 This repo contains an implemented multi-agent competitive intelligence system for an assignment in the MSBA Leveraging LLM Productivity course. The system accepts a public company name and produces a six-section Competitive Intelligence Brief using a `Supervisor-Worker` architecture in `LangGraph`.
 
+## Quickstart
+
+To run the project end-to-end:
+
+```bash
+git clone https://github.com/lukehartfield/companybriefagent.git
+cd companybriefagent
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+```
+
+Then set API keys in `.env`.
+
+Recommended default:
+
+```bash
+LLM_PROVIDER=nvidia
+NVIDIA_API_KEY=your_key_here
+NVIDIA_MODEL=minimaxai/minimax-m2.7
+NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
+
+OPENAI_MAX_RETRIES=0
+SEARCH_REGION=us-en
+```
+
+Run the system on a company name:
+
+```bash
+.venv/bin/python main.py AMD
+```
+
+Expected outputs:
+
+- `outputs/latest_brief.md`
+- `outputs/latest_brief.pdf`
+- `logs/run.log`
+
+If live external services are unavailable, the workflow is designed to return a partial-but-honest brief with disclaimers rather than fail silently.
+
 ## Final Deliverables
 
 The repo includes the final submission artifacts here:
