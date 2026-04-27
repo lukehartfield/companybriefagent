@@ -6,9 +6,7 @@ This repo contains an implemented multi-agent competitive intelligence system fo
 
 The repo includes the final submission artifacts here:
 
-- Write-up draft source: [docs/writeup_draft.md](/Users/luke/Desktop/leveraging%20llm%20prod/agent%20hw/docs/writeup_draft.md:1)
 - Write-up PDF: [docs/writeup_final.pdf](/Users/luke/Desktop/leveraging%20llm%20prod/agent%20hw/docs/writeup_final.pdf:1)
-- Architecture diagram source: [docs/architecture_diagram.md](/Users/luke/Desktop/leveraging%20llm%20prod/agent%20hw/docs/architecture_diagram.md:1)
 - Architecture diagram SVG: [docs/architecture_diagram.svg](/Users/luke/Desktop/leveraging%20llm%20prod/agent%20hw/docs/architecture_diagram.svg:1)
 - Sample output brief: [docs/sample_output_amd.md](/Users/luke/Desktop/leveraging%20llm%20prod/agent%20hw/docs/sample_output_amd.md:1)
 
