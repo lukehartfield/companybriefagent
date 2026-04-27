@@ -16,7 +16,7 @@ endobj
 << /Type /Page /Parent 4 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 6 0 R >>
 endobj
 6 0 obj
-<< /Length 6155 >>
+<< /Length 6318 >>
 stream
 BT
 0.12 0.16 0.22 rg
@@ -112,199 +112,205 @@ BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
 1 0 0 1 44.00 524.00 Tm
-(`SynthesisAgent`, and `ValidatorAgent`. The most important design refinement was in the financial) Tj
+(`SynthesisAgent`, and `ValidatorAgent`. Prompt strategy was role-specific rather than generic: the) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
 1 0 0 1 44.00 512.00 Tm
-(layer. Because financial numbers are a high-risk place to hallucinate, I changed the system to make) Tj
+(profile prompt emphasizes factual company background and product extraction, the financial prompt) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
 1 0 0 1 44.00 500.00 Tm
-(the `Financial Snapshot` as deterministic as possible using structured `yfinance` fields once the) Tj
+(emphasizes structured metric retrieval and explicit missing-data disclosure, the news prompt) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
 1 0 0 1 44.00 488.00 Tm
-(ticker is resolved, while keeping competitor discovery as a separate best-effort step.) Tj
+(emphasizes recency and materiality, the synthesis prompt emphasizes strict six-section formatting and) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 474.00 Tm
+1 0 0 1 44.00 476.00 Tm
+(grounded claims, and the validator prompt emphasizes structure checks plus unsupported-claim) Tj
+ET
+BT
+0.12 0.12 0.12 rg
+/F1 11 Tf
+1 0 0 1 44.00 464.00 Tm
+(detection. The most important design refinement was in the financial layer. Because financial numbers) Tj
+ET
+BT
+0.12 0.12 0.12 rg
+/F1 11 Tf
+1 0 0 1 44.00 452.00 Tm
+(are a high-risk place to hallucinate, I changed the system to make the `Financial Snapshot` as) Tj
+ET
+BT
+0.12 0.12 0.12 rg
+/F1 11 Tf
+1 0 0 1 44.00 440.00 Tm
+(deterministic as possible using structured `yfinance` fields once the ticker is resolved, while) Tj
+ET
+BT
+0.12 0.12 0.12 rg
+/F1 11 Tf
+1 0 0 1 44.00 428.00 Tm
+(keeping competitor discovery as a separate best-effort step.) Tj
+ET
+BT
+0.12 0.12 0.12 rg
+/F1 11 Tf
+1 0 0 1 44.00 414.00 Tm
 () Tj
-ET
-BT
-0.12 0.12 0.12 rg
-/F1 11 Tf
-1 0 0 1 44.00 457.00 Tm
-(I also added two pieces of extra depth: a `ValidatorAgent` so the brief is checked before return, and) Tj
-ET
-BT
-0.12 0.12 0.12 rg
-/F1 11 Tf
-1 0 0 1 44.00 445.00 Tm
-(PDF export so the generated markdown can become a cleaner report artifact. During development, I) Tj
-ET
-BT
-0.12 0.12 0.12 rg
-/F1 11 Tf
-1 0 0 1 44.00 433.00 Tm
-(initially tested free OpenRouter models such as `Nemotron` and `Gemma`, but rate limits became an) Tj
-ET
-BT
-0.12 0.12 0.12 rg
-/F1 11 Tf
-1 0 0 1 44.00 421.00 Tm
-(issue once retries and revision loops were involved. I then switched to free hosted models from) Tj
-ET
-BT
-0.12 0.12 0.12 rg
-/F1 11 Tf
-1 0 0 1 44.00 409.00 Tm
-(`build.nvidia.com`, reduced unnecessary request volume, and found the resulting reliability better for) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
 1 0 0 1 44.00 397.00 Tm
+(I also added two pieces of extra depth: a `ValidatorAgent` so the brief is checked before return, and) Tj
+ET
+BT
+0.12 0.12 0.12 rg
+/F1 11 Tf
+1 0 0 1 44.00 385.00 Tm
+(PDF export so the generated markdown can become a cleaner report artifact. During development, I) Tj
+ET
+BT
+0.12 0.12 0.12 rg
+/F1 11 Tf
+1 0 0 1 44.00 373.00 Tm
+(initially tested free OpenRouter models such as `Nemotron` and `Gemma`, but rate limits became an) Tj
+ET
+BT
+0.12 0.12 0.12 rg
+/F1 11 Tf
+1 0 0 1 44.00 361.00 Tm
+(issue once retries and revision loops were involved. I then switched to free hosted models from) Tj
+ET
+BT
+0.12 0.12 0.12 rg
+/F1 11 Tf
+1 0 0 1 44.00 349.00 Tm
+(`build.nvidia.com`, reduced unnecessary request volume, and found the resulting reliability better for) Tj
+ET
+BT
+0.12 0.12 0.12 rg
+/F1 11 Tf
+1 0 0 1 44.00 337.00 Tm
 (the final pipeline.) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 383.00 Tm
+1 0 0 1 44.00 323.00 Tm
 () Tj
 ET
 BT
 0.13 0.22 0.38 rg
 /F2 13 Tf
-1 0 0 1 44.00 362.00 Tm
+1 0 0 1 44.00 302.00 Tm
 (2. Failure Handling) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 344.00 Tm
+1 0 0 1 44.00 284.00 Tm
 () Tj
-ET
-BT
-0.12 0.12 0.12 rg
-/F1 11 Tf
-1 0 0 1 44.00 327.00 Tm
-(Retry and fallback are implemented directly in the workflow. The supervisor retries the) Tj
-ET
-BT
-0.12 0.12 0.12 rg
-/F1 11 Tf
-1 0 0 1 44.00 315.00 Tm
-(`CompanyProfileAgent`, `FinancialAnalystAgent`, and `NewsAgent` when they fail, and the logs) Tj
-ET
-BT
-0.12 0.12 0.12 rg
-/F1 11 Tf
-1 0 0 1 44.00 303.00 Tm
-(explicitly show this behavior. If those stages still fail, the system falls back to a role-specific) Tj
-ET
-BT
-0.12 0.12 0.12 rg
-/F1 11 Tf
-1 0 0 1 44.00 291.00 Tm
-(alternative instead of crashing. For example, the profile step can return a partial overview, the news) Tj
-ET
-BT
-0.12 0.12 0.12 rg
-/F1 11 Tf
-1 0 0 1 44.00 279.00 Tm
-(step can return a limited-coverage section, and the financial step can mark values unavailable instead) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
 1 0 0 1 44.00 267.00 Tm
+(Retry and fallback are implemented directly in the workflow. The supervisor retries the) Tj
+ET
+BT
+0.12 0.12 0.12 rg
+/F1 11 Tf
+1 0 0 1 44.00 255.00 Tm
+(`CompanyProfileAgent`, `FinancialAnalystAgent`, and `NewsAgent` when they fail, and the logs) Tj
+ET
+BT
+0.12 0.12 0.12 rg
+/F1 11 Tf
+1 0 0 1 44.00 243.00 Tm
+(explicitly show this behavior. If those stages still fail, the system falls back to a role-specific) Tj
+ET
+BT
+0.12 0.12 0.12 rg
+/F1 11 Tf
+1 0 0 1 44.00 231.00 Tm
+(alternative instead of crashing. For example, the profile step can return a partial overview, the news) Tj
+ET
+BT
+0.12 0.12 0.12 rg
+/F1 11 Tf
+1 0 0 1 44.00 219.00 Tm
+(step can return a limited-coverage section, and the financial step can mark values unavailable instead) Tj
+ET
+BT
+0.12 0.12 0.12 rg
+/F1 11 Tf
+1 0 0 1 44.00 207.00 Tm
 (of fabricating numbers.) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 253.00 Tm
+1 0 0 1 44.00 193.00 Tm
 () Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 236.00 Tm
+1 0 0 1 44.00 176.00 Tm
 (The synthesis and validator stages are treated differently because they are pure LLM stages and can) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 224.00 Tm
+1 0 0 1 44.00 164.00 Tm
 (become expensive under free-tier limits. For those, I favored one attempt followed by deterministic) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 212.00 Tm
+1 0 0 1 44.00 152.00 Tm
 (fallback behavior. A concrete example came from the provider iteration: free OpenRouter models often) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 200.00 Tm
+1 0 0 1 44.00 140.00 Tm
 (hit rate limits when retries and validator revision were triggered, so I adjusted the system to reduce) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 188.00 Tm
+1 0 0 1 44.00 128.00 Tm
 (repeated LLM calls and still return an honest partial output.) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 174.00 Tm
+1 0 0 1 44.00 114.00 Tm
 () Tj
 ET
 BT
 0.13 0.22 0.38 rg
 /F2 13 Tf
-1 0 0 1 44.00 153.00 Tm
+1 0 0 1 44.00 93.00 Tm
 (3. Results) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 135.00 Tm
+1 0 0 1 44.00 75.00 Tm
 () Tj
-ET
-BT
-0.12 0.12 0.12 rg
-/F1 11 Tf
-1 0 0 1 44.00 118.00 Tm
-(I tested the final live system on `AMD`. The full pipeline completed end-to-end: profile, financial,) Tj
-ET
-BT
-0.12 0.12 0.12 rg
-/F1 11 Tf
-1 0 0 1 44.00 106.00 Tm
-(news, synthesis, and validator all ran successfully, the validator triggered one revision pass, and) Tj
-ET
-BT
-0.12 0.12 0.12 rg
-/F1 11 Tf
-1 0 0 1 44.00 94.00 Tm
-(the system produced both markdown and PDF outputs. The strongest parts of the resulting brief were) Tj
-ET
-BT
-0.12 0.12 0.12 rg
-/F1 11 Tf
-1 0 0 1 44.00 82.00 Tm
-(structure, company overview, and financial specificity.) Tj
 ET
 0.75 0.75 0.78 RG
 0.5 w
@@ -322,132 +328,156 @@ endobj
 << /Type /Page /Parent 4 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 8 0 R >>
 endobj
 8 0 obj
-<< /Length 2973 >>
+<< /Length 3581 >>
 stream
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
 1 0 0 1 44.00 748.00 Tm
+(I tested the final live system on `AMD`. The full pipeline completed end-to-end: profile, financial,) Tj
+ET
+BT
+0.12 0.12 0.12 rg
+/F1 11 Tf
+1 0 0 1 44.00 736.00 Tm
+(news, synthesis, and validator all ran successfully, the validator triggered one revision pass, and) Tj
+ET
+BT
+0.12 0.12 0.12 rg
+/F1 11 Tf
+1 0 0 1 44.00 724.00 Tm
+(the system produced both markdown and PDF outputs. The strongest parts of the resulting brief were) Tj
+ET
+BT
+0.12 0.12 0.12 rg
+/F1 11 Tf
+1 0 0 1 44.00 712.00 Tm
+(structure, company overview, and financial specificity.) Tj
+ET
+BT
+0.12 0.12 0.12 rg
+/F1 11 Tf
+1 0 0 1 44.00 698.00 Tm
 () Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 731.00 Tm
+1 0 0 1 44.00 681.00 Tm
 (The AMD run also surfaced useful weaknesses. The validator still rejected the final brief after one) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 719.00 Tm
+1 0 0 1 44.00 669.00 Tm
 (revision pass because it found a gross-margin discrepancy, an operating-margin calculation issue, and) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 707.00 Tm
+1 0 0 1 44.00 657.00 Tm
 (a few unsupported product and enterprise-penetration claims. I view that as a useful result rather) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 695.00 Tm
+1 0 0 1 44.00 645.00 Tm
 (than a failure to hide, because it shows the validator is acting as a real quality gate. The weakest) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 683.00 Tm
+1 0 0 1 44.00 633.00 Tm
 (areas remain competitor quality, news grounding, and strategic overclaiming.) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 669.00 Tm
+1 0 0 1 44.00 619.00 Tm
 () Tj
 ET
 BT
 0.13 0.22 0.38 rg
 /F2 13 Tf
-1 0 0 1 44.00 648.00 Tm
+1 0 0 1 44.00 598.00 Tm
 (4. Evaluation Reflection) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 630.00 Tm
+1 0 0 1 44.00 580.00 Tm
 () Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 613.00 Tm
+1 0 0 1 44.00 563.00 Tm
 (If I were evaluating this system for real business use, I would separate deterministic checks from) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 601.00 Tm
+1 0 0 1 44.00 551.00 Tm
 (qualitative judgment. Deterministic checks would verify that all six sections exist, the competitor) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 589.00 Tm
+1 0 0 1 44.00 539.00 Tm
 (list has exactly three distinct names, the news section contains 2-3 sourced items, and missing) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 577.00 Tm
+1 0 0 1 44.00 527.00 Tm
 (financial data is explicitly disclosed rather than invented. I would also test the system on multiple) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 565.00 Tm
+1 0 0 1 44.00 515.00 Tm
 (public companies across industries to see whether the search and competitor logic generalize.) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 551.00 Tm
+1 0 0 1 44.00 501.00 Tm
 () Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 534.00 Tm
+1 0 0 1 44.00 484.00 Tm
 (For qualitative evaluation, I would focus on usefulness, grounding, and honesty. A good brief should) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 522.00 Tm
+1 0 0 1 44.00 472.00 Tm
 (be understandable to a strategy analyst, tied clearly to upstream evidence, and explicit about) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 510.00 Tm
+1 0 0 1 44.00 460.00 Tm
 (uncertainty. The main failure modes I would test for are stale news, weak competitor selection,) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 498.00 Tm
+1 0 0 1 44.00 448.00 Tm
 (unsupported strategic claims, malformed structure, provider rate limits, and finance-source resolution) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 486.00 Tm
+1 0 0 1 44.00 436.00 Tm
 (problems. The main lesson from building this system is that multi-agent quality depends as much on) Tj
 ET
 BT
 0.12 0.12 0.12 rg
 /F1 11 Tf
-1 0 0 1 44.00 474.00 Tm
+1 0 0 1 44.00 424.00 Tm
 (orchestration and verification as on model quality itself.) Tj
 ET
 0.75 0.75 0.78 RG
@@ -474,11 +504,11 @@ xref
 0000000238 00000 n 
 0000000301 00000 n 
 0000000447 00000 n 
-0000006654 00000 n 
-0000006800 00000 n 
-0000009825 00000 n 
+0000006817 00000 n 
+0000006963 00000 n 
+0000010596 00000 n 
 trailer
 << /Size 10 /Root 9 0 R >>
 startxref
-9874
+10645
 %%EOF

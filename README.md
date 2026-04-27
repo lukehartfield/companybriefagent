@@ -8,7 +8,10 @@ The repo includes the final submission artifacts here:
 
 - Write-up PDF: [docs/writeup_final.pdf](/Users/luke/Desktop/leveraging%20llm%20prod/agent%20hw/docs/writeup_final.pdf:1)
 - Architecture diagram SVG: [docs/architecture_diagram.svg](/Users/luke/Desktop/leveraging%20llm%20prod/agent%20hw/docs/architecture_diagram.svg:1)
+- Architecture diagram PNG: [docs/architecture_diagram.png](/Users/luke/Desktop/leveraging%20llm%20prod/agent%20hw/docs/architecture_diagram.png:1)
 - Sample output brief: [docs/sample_output_amd.md](/Users/luke/Desktop/leveraging%20llm%20prod/agent%20hw/docs/sample_output_amd.md:1)
+
+![Architecture Diagram](docs/architecture_diagram.png)
 
 ## Current architecture
 
